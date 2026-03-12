@@ -1,56 +1,32 @@
-import gradio as gr
+import streamlit as st
 from ultralytics import YOLO
+from PIL import Image
 import numpy as np
 
-# Load model
+st.title("🚗 Vehicle Detection System")
+
 model = YOLO("yolov8n.pt")
 
-def detect_vehicle(image):
+uploaded_file = st.file_uploader("Upload Traffic Image", type=["jpg","png","jpeg"])
 
-    results = model(image)
+if uploaded_file is not None:
 
-    annotated_image = results[0].plot()
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    # Count vehicles
-    vehicles = ["car", "truck", "bus", "motorcycle"]
+    results = model(np.array(image))
+
+    annotated = results[0].plot()
+
+    st.image(annotated, caption="Detected Vehicles")
+
+    vehicles = ["car","truck","bus","motorcycle"]
     count = 0
-    detected = []
 
     for box in results[0].boxes:
         cls = int(box.cls)
         label = model.names[cls]
-        conf = float(box.conf)
-
         if label in vehicles:
             count += 1
-            detected.append(f"{label} ({conf:.2f})")
 
-    return annotated_image, count, ", ".join(detected)
-
-
-with gr.Blocks(theme=gr.themes.Soft()) as demo:
-
-    gr.Markdown("# 🚗 Smart Vehicle Detection System")
-    gr.Markdown("Upload a traffic image to detect and count vehicles using YOLOv8")
-
-    with gr.Row():
-
-        image_input = gr.Image(type="numpy", label="Upload Image")
-
-        image_output = gr.Image(label="Detection Result")
-
-    detect_btn = gr.Button("Detect Vehicles")
-
-    with gr.Row():
-
-        vehicle_count = gr.Number(label="Total Vehicles Detected")
-
-        vehicle_list = gr.Textbox(label="Detected Vehicle Types")
-
-    detect_btn.click(
-        fn=detect_vehicle,
-        inputs=image_input,
-        outputs=[image_output, vehicle_count, vehicle_list]
-    )
-
-demo.launch()
+    st.success(f"Total Vehicles Detected: {count}")
