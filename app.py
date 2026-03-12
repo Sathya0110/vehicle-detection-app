@@ -1,3 +1,6 @@
+import os
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
+
 import streamlit as st
 from ultralytics import YOLO
 from PIL import Image
@@ -15,20 +18,19 @@ model = load_model()
 
 uploaded_file = st.file_uploader("Upload Traffic Image", type=["jpg","png","jpeg"])
 
-if uploaded_file is not None:
+if uploaded_file:
 
     image = Image.open(uploaded_file).convert("RGB")
 
     st.image(image, caption="Uploaded Image", use_container_width=True)
 
-    results = model(np.array(image), conf=0.3)
+    results = model(np.array(image))
 
     annotated = results[0].plot()
 
     st.image(annotated, caption="Detected Vehicles", use_container_width=True)
 
     vehicles = ["car","bus","truck","motorcycle"]
-
     count = 0
 
     for box in results[0].boxes:
